@@ -224,10 +224,11 @@ function Navbar() {
           }}
           onClick={handleLogoClick}
         >
-          <CodeOutlined
+          <img
+            src="/codesprint-logo.png"
+            alt="CodeSprint Logo"
             style={{
-              fontSize: "24px",
-              color: theme.palette.primary.main,
+              height: "32px",
               marginRight: "8px",
             }}
           />
@@ -389,10 +390,11 @@ function Navbar() {
               }}
               onClick={handleLogoClick}
             >
-              <CodeOutlined
+              <img
+                src="/codesprint-logo.png"
+                alt="CodeSprint Logo"
                 style={{
-                  fontSize: "24px",
-                  color: "#0D9488",
+                  height: "32px",
                   marginRight: "8px",
                 }}
               />

@@ -14,12 +14,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CodeOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
-  MailOutlined,
-} from "@ant-design/icons";
+import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import axios from "axios";
 
 function SignUp() {
@@ -135,10 +130,11 @@ function SignUp() {
                 mb: 2,
               }}
             >
-              <MailOutlined
+              <img
+                src="/codesprint-logo.png"
+                alt="CodeSprint Logo"
                 style={{
-                  fontSize: "64px",
-                  color: theme.palette.primary.main,
+                  height: "64px",
                   marginBottom: "24px",
                 }}
               />
@@ -216,10 +212,11 @@ function SignUp() {
               }}
               onClick={() => navigate("/")}
             >
-              <CodeOutlined
+              <img
+                src="/codesprint-logo.png"
+                alt="CodeSprint Logo"
                 style={{
-                  fontSize: "32px",
-                  color: theme.palette.primary.main,
+                  height: "32px",
                   marginRight: "8px",
                 }}
               />

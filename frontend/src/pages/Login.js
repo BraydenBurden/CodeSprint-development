@@ -13,11 +13,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CodeOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
-} from "@ant-design/icons";
+import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useUser } from "../contexts/UserContext";
 
@@ -116,10 +112,11 @@ function Login() {
               }}
               onClick={() => navigate("/")}
             >
-              <CodeOutlined
+              <img
+                src="/codesprint-logo.png"
+                alt="CodeSprint Logo"
                 style={{
-                  fontSize: "32px",
-                  color: theme.palette.primary.main,
+                  height: "32px",
                   marginRight: "8px",
                 }}
               />
