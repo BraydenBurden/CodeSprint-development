@@ -25,6 +25,18 @@ function Dashboard() {
   const navigate = useNavigate();
   const { user, logoutUser, devMode } = useUser();
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const formatted = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "2-digit",
+    });
+
+    // Replace the default formatting to add comma after the day
+    return formatted.replace(/(\w+) (\d+)(,?) (\d+)/, "$1 $2, $4");
+  };
+
   const handleLogout = () => {
     logoutUser();
     navigate("/login");
@@ -56,33 +68,45 @@ function Dashboard() {
             bgcolor: theme.palette.background.paper,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <Avatar
-              sx={{
-                width: 60,
-                height: 60,
-                bgcolor: theme.palette.primary.main,
-                mr: 2,
-              }}
-            >
-              <UserOutlined style={{ fontSize: "1.5rem" }} />
-            </Avatar>
-            <Box>
-              <Typography variant="h4" sx={{ mb: 0.5 }}>
-                Welcome,{" "}
-                {devMode && user.developer_profile?.displayName
-                  ? user.developer_profile.displayName
-                  : user.firstName}
-                !
-              </Typography>
-              <Typography color="text.secondary">{user.email}</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: { xs: 2, sm: 0 },
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Avatar
+                sx={{
+                  width: 60,
+                  height: 60,
+                  bgcolor: theme.palette.primary.main,
+                  mr: 2,
+                }}
+              >
+                <UserOutlined style={{ fontSize: "1.5rem" }} />
+              </Avatar>
+              <Box>
+                <Typography variant="h4" sx={{ mb: 0.5 }}>
+                  Welcome,{" "}
+                  {devMode && user.developer_profile?.displayName
+                    ? user.developer_profile.displayName
+                    : user.firstName}
+                  !
+                </Typography>
+                <Typography color="text.secondary">{user.email}</Typography>
+              </Box>
             </Box>
             <Button
               variant="outlined"
               color="error"
               startIcon={<LogoutOutlined />}
               onClick={handleLogout}
-              sx={{ ml: "auto" }}
+              sx={{
+                ml: { sm: "auto" },
+                width: { xs: "100%", sm: "auto" },
+              }}
             >
               Logout
             </Button>
@@ -196,9 +220,7 @@ function Dashboard() {
                     <Typography color="text.secondary" gutterBottom>
                       Member Since
                     </Typography>
-                    <Typography>
-                      {new Date(user.createdDate).toLocaleDateString()}
-                    </Typography>
+                    <Typography>{formatDate(user.createdDate)}</Typography>
                   </Box>
                 </>
               )}

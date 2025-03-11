@@ -39,6 +39,18 @@ function Profile() {
     bio: user?.developer_profile?.bio || "",
   });
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const formatted = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "2-digit",
+    });
+
+    // Replace the default formatting to add comma after the day
+    return formatted.replace(/(\w+) (\d+)(,?) (\d+)/, "$1 $2, $4");
+  };
+
   // At the top of the component, after the hooks
 
   // Update form data when user object changes
@@ -227,7 +239,7 @@ function Profile() {
                   color="text.secondary"
                   textAlign="center"
                 >
-                  Member since {new Date(user.createdDate).toLocaleDateString()}
+                  Member since {formatDate(user.createdDate)}
                 </Typography>
               </Box>
             </Paper>

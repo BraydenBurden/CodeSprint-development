@@ -351,6 +351,26 @@ function Navbar() {
                 }
               />
             </ListItem>
+            <Divider sx={{ my: 1 }} />
+            <ListItem>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => handleNavigation("/login")}
+                sx={{ mb: 1 }}
+              >
+                Login
+              </Button>
+            </ListItem>
+            <ListItem>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => handleNavigation("/signup")}
+              >
+                Sign Up
+              </Button>
+            </ListItem>
           </List>
         )}
       </Box>
@@ -366,7 +386,13 @@ function Navbar() {
         sx={{ borderBottom: 1, borderColor: "divider" }}
       >
         <Container maxWidth="lg">
-          <Toolbar sx={{ px: { xs: 0 } }}>
+          <Toolbar
+            sx={{
+              px: { xs: 0 },
+              justifyContent: { xs: "center", md: "flex-start" },
+              position: "relative",
+            }}
+          >
             {/* Mobile Menu Button */}
             {isMobile && (
               <IconButton
@@ -374,7 +400,11 @@ function Navbar() {
                 color="inherit"
                 aria-label="menu"
                 onClick={() => setMobileMenuOpen(true)}
-                sx={{ mr: 2 }}
+                sx={{
+                  mr: 2,
+                  position: "absolute",
+                  left: 0,
+                }}
               >
                 <MenuOutlined />
               </IconButton>
@@ -387,6 +417,7 @@ function Navbar() {
                 alignItems: "center",
                 cursor: "pointer",
                 "&:hover": { opacity: 0.8 },
+                ml: { xs: 0, md: 0 },
               }}
               onClick={handleLogoClick}
             >
@@ -414,7 +445,7 @@ function Navbar() {
             </Box>
 
             {/* Navigation Links */}
-            <Box sx={{ ml: 4 }}>{renderNavLinks()}</Box>
+            <Box sx={{ ml: { xs: 0, md: 4 } }}>{renderNavLinks()}</Box>
 
             {/* Auth Buttons and Theme Toggle */}
             <Box
@@ -423,6 +454,8 @@ function Navbar() {
                 display: "flex",
                 gap: 2,
                 alignItems: "center",
+                position: { xs: "absolute", md: "static" },
+                right: { xs: 0, md: "auto" },
               }}
             >
               {user ? (

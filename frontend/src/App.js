@@ -21,8 +21,17 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import { UserProvider } from "./contexts/UserContext";
 
-// Set default base URL for all Axios requests
-axios.defaults.baseURL = "http://localhost:8080";
+// Configure axios defaults
+const getBaseUrl = () => {
+  const hostname = window.location.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:8080";
+  }
+  // When accessing from other devices in the network
+  return `http://${hostname}:8080`;
+};
+
+axios.defaults.baseURL = getBaseUrl();
 
 // Add request interceptor to include token
 axios.interceptors.request.use(

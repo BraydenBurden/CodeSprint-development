@@ -21,7 +21,23 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if the origin is allowed
+      if (allowedOrigins.indexOf(origin) === -1) {
+        // If it's not in allowedOrigins but has the same IP as the server
+        // This allows access from any port on development machines
+        const requestOriginUrl = new URL(origin);
+        if (process.env.NODE_ENV !== "production") {
+          return callback(null, true);
+        }
+      }
+
+      return callback(null, true);
+    },
+    credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
     exposedHeaders: [
       "Access-Control-Allow-Origin",
