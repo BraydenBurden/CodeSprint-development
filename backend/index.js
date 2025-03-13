@@ -61,10 +61,12 @@ app.use(express.urlencoded({ extended: true }));
 // Import routes
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
+const eventRoutes = require("./routes/events");
 
 // Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/events", eventRoutes);
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {

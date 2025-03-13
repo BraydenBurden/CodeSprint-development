@@ -20,6 +20,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import { UserProvider } from "./contexts/UserContext";
+import Calendar from "./pages/Calendar";
 
 // Configure axios defaults
 const getBaseUrl = () => {
@@ -75,6 +76,7 @@ function AppContent() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/calendar" element={<Calendar />} />
         </Routes>
       </Box>
     </Box>
@@ -181,6 +183,40 @@ function App() {
                   mode === "light"
                     ? "0 4px 6px rgba(0, 0, 0, 0.1)"
                     : "0 4px 6px rgba(0, 0, 0, 0.3)",
+              },
+            },
+          },
+          MuiPaper: {
+            styleOverrides: {
+              root: {
+                "& .fc-theme-standard td, & .fc-theme-standard th": {
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                },
+                "& .fc-theme-standard .fc-scrollgrid": {
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                },
+                "& .fc-timegrid-slot": {
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                },
+                "& .fc-timegrid-slot-lane": {
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                },
+                "& .fc-timegrid-axis": {
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                },
+                "& .fc-popover": {
+                  backgroundColor: mode === "dark" ? "#1e1e1e" : "#ffffff",
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                },
+                "& .fc-popover-header": {
+                  backgroundColor: mode === "dark" ? "#2a2a2a" : "#f8f9fa",
+                  borderColor: mode === "dark" ? "#3a3a3a" : undefined,
+                  color: mode === "dark" ? "#ffffff" : undefined,
+                },
+                "& .fc-popover-body": {
+                  backgroundColor: mode === "dark" ? "#1e1e1e" : "#ffffff",
+                  color: mode === "dark" ? "#ffffff" : undefined,
+                },
               },
             },
           },

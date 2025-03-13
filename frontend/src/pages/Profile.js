@@ -100,6 +100,14 @@ function Profile() {
     setSuccess("");
   };
 
+  // Function to handle success messages with auto-dismissal
+  const showSuccessMessage = (message) => {
+    setSuccess(message);
+    setTimeout(() => {
+      setSuccess("");
+    }, 3000); // Message will disappear after 3 seconds
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -117,7 +125,7 @@ function Profile() {
 
       if (response.data.ok && response.data.user) {
         setUser(response.data.user);
-        setSuccess("Profile updated successfully!");
+        showSuccessMessage("Profile updated successfully!");
       } else {
         setError("Failed to update profile");
       }
@@ -156,7 +164,7 @@ function Profile() {
       );
       if (response.data.ok && response.data.user) {
         setUser(response.data.user);
-        setSuccess("Developer profile updated successfully!");
+        showSuccessMessage("Developer profile updated successfully!");
       } else {
         setError("Failed to update developer profile");
       }
