@@ -50,7 +50,7 @@ function Dashboard() {
   return (
     <Box
       sx={{
-        minHeight: "calc(100vh - 64px)", // Account for navbar
+        minHeight: "calc(99vh - 64px)", // Account for navbar
         py: 4,
         bgcolor:
           theme.palette.mode === "light" ? "grey.50" : "background.default",
@@ -78,6 +78,7 @@ function Dashboard() {
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Avatar
+                src={user?.profile_picture_url}
                 sx={{
                   width: 60,
                   height: 60,

@@ -4,10 +4,16 @@ const express = require("express");
 const cron = require("node-cron");
 const cors = require("cors");
 const morgan = require("morgan");
+const http = require("http");
 const app = express();
+const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
 const con = require("./db");
+const { initializeSocket } = require("./services/socketService");
+
+// Initialize Socket.IO
+initializeSocket(server);
 
 // Setup request logging
 app.use(
@@ -62,11 +68,13 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
 const eventRoutes = require("./routes/events");
+const chatRoutes = require("./routes/chat");
 
 // Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {
@@ -90,6 +98,6 @@ app.use((req, res) => {
   });
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`CodeSprint server listening on port ${port}`);
 });

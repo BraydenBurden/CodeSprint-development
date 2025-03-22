@@ -21,6 +21,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import { UserProvider } from "./contexts/UserContext";
 import Calendar from "./pages/Calendar";
+import Chat from "./pages/Chat";
 
 // Configure axios defaults
 const getBaseUrl = () => {
@@ -77,6 +78,7 @@ function AppContent() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/chat" element={<Chat />} />
         </Routes>
       </Box>
     </Box>

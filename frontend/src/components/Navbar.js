@@ -142,11 +142,11 @@ function Navbar() {
           </Button>
           <Button
             color="inherit"
-            onClick={() => handleNavigation("/messages")}
+            onClick={() => handleNavigation("/chat")}
             sx={{
               display: { xs: "none", md: "flex" },
               color:
-                location.pathname === "/messages"
+                location.pathname === "/chat"
                   ? "primary.main"
                   : "text.secondary",
               "&:hover": { color: "primary.main" },
@@ -265,7 +265,7 @@ function Navbar() {
               </ListItemIcon>
               <ListItemText primary="Calendar" />
             </ListItem>
-            <ListItem button onClick={() => handleNavigation("/messages")}>
+            <ListItem button onClick={() => handleNavigation("/chat")}>
               <ListItemIcon>
                 <MessageOutlined />
               </ListItemIcon>
@@ -500,6 +500,7 @@ function Navbar() {
                     aria-expanded={Boolean(anchorEl) ? "true" : undefined}
                   >
                     <Avatar
+                      src={user?.profile_picture_url}
                       sx={{
                         width: 32,
                         height: 32,

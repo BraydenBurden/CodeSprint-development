@@ -11,8 +11,12 @@ import {
   IconButton,
   useTheme,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 import { UserOutlined, CameraOutlined } from "@ant-design/icons";
@@ -25,6 +29,7 @@ function Profile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -38,6 +43,8 @@ function Profile() {
     primaryLanguage: user?.developer_profile?.primaryLanguage || "",
     bio: user?.developer_profile?.bio || "",
   });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -106,6 +113,77 @@ function Profile() {
     setTimeout(() => {
       setSuccess("");
     }, 3000); // Message will disappear after 3 seconds
+  };
+
+  const handleProfilePictureClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size should be less than 5MB");
+      return;
+    }
+
+    // Show preview and confirmation dialog
+    setSelectedFile(file);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmUpload = async () => {
+    setShowConfirmDialog(false);
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const formData = new FormData();
+      formData.append("profilePicture", selectedFile);
+
+      const response = await axios.post(
+        `/api/profile/user/${user.id}/profile-picture`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.ok) {
+        // Update user context with new profile picture URL
+        setUser({
+          ...user,
+          profile_picture_url: response.data.profilePictureUrl,
+        });
+        showSuccessMessage("Profile picture updated successfully!");
+      } else {
+        setError("Failed to update profile picture");
+      }
+    } catch (err) {
+      console.error("Error uploading profile picture:", err);
+      setError(
+        err.response?.data?.message || "Error uploading profile picture"
+      );
+    } finally {
+      setLoading(false);
+      setSelectedFile(null);
+    }
+  };
+
+  const handleCancelUpload = () => {
+    setShowConfirmDialog(false);
+    setSelectedFile(null);
   };
 
   const handleSubmit = async (e) => {
@@ -181,7 +259,7 @@ function Profile() {
   return (
     <Box
       sx={{
-        minHeight: "calc(100vh - 64px)",
+        minHeight: "calc(99vh - 64px)",
         py: 4,
         bgcolor:
           theme.palette.mode === "light" ? "grey.50" : "background.default",
@@ -189,51 +267,68 @@ function Profile() {
     >
       <Container maxWidth="lg">
         <Grid container spacing={3}>
-          {/* Left Column - Profile Picture and Basic Info */}
+          {/* Left Column - Profile Summary */}
           <Grid item xs={12} md={4}>
             <Paper
               elevation={0}
               sx={{
                 p: 3,
-                height: "100%",
                 border: "1px solid",
                 borderColor: "divider",
+                textAlign: "center",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
+                  position: "relative",
+                  display: "inline-block",
                   mb: 3,
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
                 }}
               >
-                <Box sx={{ position: "relative", mb: 2 }}>
+                <Box sx={{ position: "relative" }}>
                   <Avatar
+                    src={user.profile_picture_url}
                     sx={{
                       width: 120,
                       height: 120,
                       bgcolor: theme.palette.primary.main,
+                      mb: 2,
                     }}
                   >
                     <UserOutlined style={{ fontSize: "3rem" }} />
                   </Avatar>
                   <IconButton
+                    onClick={handleProfilePictureClick}
                     sx={{
                       position: "absolute",
                       bottom: 0,
                       right: 0,
-                      bgcolor: "background.paper",
-                      border: "1px solid",
-                      borderColor: "divider",
+                      bgcolor: theme.palette.background.paper,
                       "&:hover": {
-                        bgcolor: "background.paper",
+                        bgcolor: theme.palette.background.paper,
                       },
                     }}
                   >
                     <CameraOutlined />
                   </IconButton>
                 </Box>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleProfilePictureChange}
+                  accept="image/*"
+                  style={{ display: "none" }}
+                />
+              </Box>
+
+              <Box sx={{ flexGrow: 1, width: "100%" }}>
                 <Typography variant="h6" sx={{ mb: 0.5 }}>
                   {devMode && user.developer_profile?.displayName
                     ? user.developer_profile.displayName
@@ -453,6 +548,59 @@ function Profile() {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Add the confirmation dialog */}
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelUpload}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Confirm Profile Picture Upload</DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              mt: 2,
+            }}
+          >
+            <Avatar
+              src={
+                selectedFile
+                  ? URL.createObjectURL(selectedFile)
+                  : user.profile_picture_url
+              }
+              sx={{
+                width: 120,
+                height: 120,
+                bgcolor: theme.palette.primary.main,
+              }}
+            >
+              <UserOutlined style={{ fontSize: "3rem" }} />
+            </Avatar>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              textAlign="center"
+            >
+              Are you sure you want to update your profile picture?
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelUpload}>Cancel</Button>
+          <Button
+            onClick={handleConfirmUpload}
+            variant="contained"
+            disabled={loading}
+          >
+            {loading ? "Uploading..." : "Upload"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
