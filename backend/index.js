@@ -69,12 +69,14 @@ const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
 const eventRoutes = require("./routes/events");
 const chatRoutes = require("./routes/chat");
+const projectRoutes = require("./routes/projects");
 
 // Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/projects", projectRoutes);
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {
