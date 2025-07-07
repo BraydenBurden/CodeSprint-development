@@ -47,6 +47,37 @@ function Dashboard() {
     return null;
   }
 
+  const languageColors = [
+    "#F97316",
+    "#F7DF1E",
+    "#3776AB",
+    "#3178C6",
+    "#B07219",
+    "#CC342D",
+    "#10B981",
+    "#6366F1",
+    "#EF4444",
+    "#8B5CF6",
+    "#3B82F6",
+    "#EC4899",
+    "#22D3EE",
+    "#F59E0B",
+    "#84CC16",
+  ];
+
+  const stringToNumber = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+  };
+
+  const getColorForLanguage = (lang) => {
+    const index = stringToNumber(lang) % languageColors.length;
+    return languageColors[index];
+  };
+
   return (
     <Box
       sx={{
@@ -145,11 +176,24 @@ function Dashboard() {
                     <Typography color="text.secondary" gutterBottom>
                       Primary Language
                     </Typography>
-                    <Chip
-                      label={user.developer_profile.primaryLanguage}
-                      color="primary"
-                      size="small"
-                    />
+                    {user.developer_profile.primaryLanguage
+                      .split(",")
+                      .map((lang) => {
+                        const trimmed = lang.trim();
+                        return (
+                          <Chip
+                            key={trimmed}
+                            label={trimmed}
+                            size="small"
+                            sx={{
+                              bgcolor: getColorForLanguage(trimmed),
+                              color: "#fff",
+                              mr: 0.5,
+                              mb: 0.5,
+                            }}
+                          />
+                        );
+                      })}
                   </Box>
                   <Box sx={{ mb: 2 }}>
                     <Typography color="text.secondary" gutterBottom>
