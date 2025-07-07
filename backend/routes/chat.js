@@ -27,8 +27,8 @@ router.get("/conversations/:userId", (req, res) => {
 
   const sql = `
     SELECT DISTINCT c.*, 
-           cp.last_read_at,
-           u.firstName, u.lastName, u.email,
+           c.last_checked_at,
+           u.firstName, u.lastName, u.email, u.profile_picture_url, u.id as user_id,
            (SELECT content FROM messages 
             WHERE conversation_id = c.id 
             ORDER BY created_at DESC LIMIT 1) as last_message,
@@ -69,6 +69,7 @@ router.get("/conversations/:userId", (req, res) => {
         firstName: conv.firstName,
         lastName: conv.lastName,
         email: conv.email,
+        profile_picture_url: conv.profile_picture_url,
       },
     }));
 
@@ -205,8 +206,8 @@ router.post("/conversations/:conversationId/messages", (req, res) => {
   const { senderId, content } = req.body;
 
   const sql = `
-    INSERT INTO messages (conversation_id, sender_id, content)
-    VALUES (?, ?, ?)
+    INSERT INTO messages (conversation_id, sender_id, content, read_at)
+    VALUES (?, ?, ?, null)
   `;
 
   con.query(sql, [conversationId, senderId, content], (err, result) => {
@@ -324,6 +325,42 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       message: "Error uploading file",
     });
   }
+});
+
+router.post("/conversations/:conversationId/read_convo", (req, res) => {
+  const con = db.getConnection();
+  const conversationId = req.params.conversationId;
+
+  if (!conversationId) {
+    return res
+      .status(400)
+      .json({ ok: false, message: "Conversation ID is required" });
+  }
+
+  const sql = `
+    UPDATE conversations
+    SET last_checked_at = NOW()
+    WHERE id = ?
+  `;
+
+  con.query(sql, [conversationId], (err, result) => {
+    if (err) {
+      console.error("Error updating last_checked_at:", err);
+      return res
+        .status(500)
+        .json({ ok: false, message: "Failed to update conversation" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ ok: false, message: "Conversation not found" });
+    }
+
+    console.log("Conversation marked as read");
+
+    res.json({ ok: true, message: "Conversation marked as read" });
+  });
 });
 
 module.exports = router;

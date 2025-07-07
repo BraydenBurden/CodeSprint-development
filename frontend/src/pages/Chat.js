@@ -204,11 +204,23 @@ function Chat() {
     return matches;
   });
 
-  const handleUserSelect = (conversation) => {
-    console.log("Selecting conversation:", conversation);
+  const handleUserSelect = async (conversation) => {
     setSelectedUser(conversation);
-    if (isMobile) {
-      setShowUsersList(false);
+    if (isMobile) setShowUsersList(false);
+
+    try {
+      await axios.post(`/api/chat/conversations/${conversation.id}/read_convo`);
+      console.log("Marked conversation as read");
+      // Optimistically update local state
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === conversation.id
+            ? { ...conv, last_checked_at: new Date().toISOString() }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark conversation as read", error);
     }
   };
 
@@ -241,42 +253,93 @@ function Chat() {
         />
       </Box>
       <List sx={{ flexGrow: 1, overflow: "auto" }}>
-        {filteredConversations.map((conv) => (
-          <ListItem
-            key={conv.id}
-            button
-            selected={selectedUser?.id === conv.id}
-            onClick={() => handleUserSelect(conv)}
-            sx={{
-              "&:hover": {
-                bgcolor: theme.palette.action.hover,
-              },
-            }}
-          >
-            <ListItemAvatar>
-              <Avatar>{conv.participant.firstName[0]}</Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary={`${conv.participant.firstName} ${conv.participant.lastName}`}
-              secondary={
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {conv.last_message || "No messages yet"}
-                </Typography>
-              }
-            />
-            <Typography variant="caption" color="text.secondary">
-              {conv.last_message_time || "Just now"}
-            </Typography>
-          </ListItem>
-        ))}
+        {filteredConversations.map((conv) => {
+          const isUnread =
+            conv.last_checked_at &&
+            conv.last_message_at &&
+            new Date(conv.last_checked_at) < new Date(conv.last_message_at);
+
+          return (
+            <ListItem
+              key={conv.id}
+              button
+              selected={selectedUser?.id === conv.id}
+              onClick={() => handleUserSelect(conv)}
+              sx={{
+                "&:hover": {
+                  bgcolor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <ListItemAvatar>
+                {conv.participant.profile_picture_url ? (
+                  <Avatar src={conv.participant.profile_picture_url} />
+                ) : (
+                  <Avatar
+                    sx={{
+                      bgcolor: `${getStableRandomColor(
+                        conv.participant.id +
+                          conv.participant.email +
+                          conv.participant.firstName
+                      )}`,
+                    }}
+                  >
+                    {conv.participant.firstName[0]}
+                    {conv.participant.lastName[0]}
+                  </Avatar>
+                )}
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: isUnread ? "bold" : "normal",
+                        flexGrow: 1,
+                      }}
+                    >
+                      {conv.participant.firstName} {conv.participant.lastName}
+                    </Typography>
+                    {isUnread && (
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          bgcolor: "primary.main",
+                          ml: 1,
+                        }}
+                      />
+                    )}
+                  </Box>
+                }
+                secondary={
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      fontWeight: isUnread ? "bold" : "normal",
+                    }}
+                  >
+                    {conv.last_message || "No messages yet"}
+                  </Typography>
+                }
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ ml: 1, minWidth: 70, textAlign: "right" }}
+              >
+                {conv.last_message_time || "Just now"}
+              </Typography>
+            </ListItem>
+          );
+        })}
       </List>
     </Paper>
   );
@@ -318,6 +381,44 @@ function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const getStableRandomColor = (seed) => {
+    const colors = [
+      "#FF6B6B",
+      "#6BCB77",
+      "#4D96FF",
+      "#FFD93D",
+      "#FF6F91",
+      "#845EC2",
+      "#00C9A7",
+      "#FFC75F",
+      "#F9F871",
+      "#0081CF",
+      "#FF9F1C",
+      "#2EC4B6",
+      "#E71D36",
+      "#FFBF69",
+      "#CBF3F0",
+      "#9D4EDD",
+      "#00A8E8",
+      "#FF4C29",
+      "#00B159",
+      "#F77F00",
+      "#EF476F",
+      "#118AB2",
+      "#06D6A0",
+      "#073B4C",
+      "#FF1654",
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  };
 
   return (
     <Box
@@ -404,9 +505,29 @@ function Chat() {
                 )}
                 {selectedUser ? (
                   <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Avatar sx={{ mr: 2 }}>
-                      {selectedUser.participant.firstName[0]}
-                    </Avatar>
+                    {selectedUser.participant.profile_picture_url ? (
+                      <Avatar
+                        src={selectedUser?.participant.profile_picture_url}
+                        sx={{
+                          bgcolor: theme.palette.primary.main,
+                          mr: 2,
+                        }}
+                      />
+                    ) : (
+                      <Avatar
+                        sx={{
+                          bgcolor: `${getStableRandomColor(
+                            selectedUser.participant.id +
+                              selectedUser.participant.email +
+                              selectedUser.participant.firstName
+                          )}`,
+                          mr: 2,
+                        }}
+                      >
+                        {selectedUser.participant.firstName[0]}
+                        {selectedUser.participant.lastName[0]}
+                      </Avatar>
+                    )}
                     <Box>
                       <Typography variant="subtitle1">
                         {`${selectedUser.participant.firstName} ${selectedUser.participant.lastName}`}
@@ -646,42 +767,79 @@ function Chat() {
                   />
                 </ListItem>
               ) : (
-                filteredConversations.map((conv) => (
-                  <ListItem
-                    key={conv.id}
-                    button
-                    selected={selectedUser?.id === conv.id}
-                    onClick={() => handleUserSelect(conv)}
-                    sx={{
-                      "&:hover": {
-                        bgcolor: theme.palette.action.hover,
-                      },
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar>{conv.participant.firstName[0]}</Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={`${conv.participant.firstName} ${conv.participant.lastName}`}
-                      secondary={
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {conv.last_message || "No messages yet"}
-                        </Typography>
-                      }
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {conv.last_message_time || "Just now"}
-                    </Typography>
-                  </ListItem>
-                ))
+                filteredConversations.map((conv) => {
+                  const isUnread =
+                    conv.last_checked_at &&
+                    conv.last_message_at &&
+                    new Date(conv.last_checked_at) <
+                      new Date(conv.last_message_at);
+
+                  return (
+                    <ListItem
+                      key={conv.id}
+                      button
+                      selected={selectedUser?.id === conv.id}
+                      onClick={async () => {
+                        await handleUserSelect(conv);
+                        setShowUsersList(false);
+                      }}
+                      sx={{
+                        "&:hover": {
+                          bgcolor: theme.palette.action.hover,
+                        },
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar>{conv.participant.firstName[0]}</Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontWeight: isUnread ? "bold" : "normal",
+                                flexGrow: 1,
+                              }}
+                            >
+                              {conv.participant.firstName}{" "}
+                              {conv.participant.lastName}
+                            </Typography>
+                            {isUnread && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  bgcolor: "primary.main",
+                                  ml: 1,
+                                }}
+                              />
+                            )}
+                          </Box>
+                        }
+                        secondary={
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              fontWeight: isUnread ? "bold" : "normal",
+                            }}
+                          >
+                            {conv.last_message || "No messages yet"}
+                          </Typography>
+                        }
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {conv.last_message_time || "Just now"}
+                      </Typography>
+                    </ListItem>
+                  );
+                })
               )}
             </List>
           </Box>
