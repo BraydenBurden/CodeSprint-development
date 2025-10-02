@@ -27,23 +27,23 @@ const initializeSocket = (server) => {
 
     // Handle new message
     socket.on("send_message", (data) => {
-      io.to(`conversation_${data.conversationId}`).emit("new_message", data);
+      // Emit to everyone in the room
+      io.to(`conversation_${data.conversation_id}`).emit("new_message", data);
       console.log("New message sent:", data);
     });
 
     // Handle typing status
     socket.on("typing", (data) => {
-      socket.to(`conversation_${data.conversationId}`).emit("user_typing", {
-        userId: data.userId,
-        isTyping: data.isTyping,
-      });
+      socket
+        .to(`conversation_${data.conversation_id}`)
+        .emit("user_typing", { userId: data.userId, isTyping: data.isTyping });
     });
 
     // Handle message read status
     socket.on("read_messages", (data) => {
-      io.to(`conversation_${data.conversationId}`).emit("messages_read", {
+      io.to(`conversation_${data.conversation_id}`).emit("messages_read", {
         userId: data.userId,
-        conversationId: data.conversationId,
+        conversationId: data.conversation_id,
       });
     });
 
@@ -61,13 +61,8 @@ const initializeSocket = (server) => {
 };
 
 const getIO = () => {
-  if (!io) {
-    throw new Error("Socket.io not initialized!");
-  }
+  if (!io) throw new Error("Socket.io not initialized!");
   return io;
 };
 
-module.exports = {
-  initializeSocket,
-  getIO,
-};
+module.exports = { initializeSocket, getIO };

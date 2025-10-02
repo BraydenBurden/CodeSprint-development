@@ -34,6 +34,7 @@ function Chat() {
   const [lastMessageTime, setLastMessageTime] = useState(null);
   const { user } = useUser();
   const messageContainerRef = useRef(null);
+  const previousSelectedUserRef = useRef(null);
 
   const fetchMessages = useCallback(async (conversationId) => {
     try {
@@ -70,74 +71,61 @@ function Chat() {
   }, [selectedUser, fetchMessages]);
 
   // Socket.IO event listeners
+  // Socket.IO event listeners
   useEffect(() => {
-    console.log("Setting up socket listeners");
+    if (!user) return;
 
     const handleNewMessage = (message) => {
       console.log("Received new message via socket:", message);
 
-      // Always update conversations list first
+      // Update conversations for all clients
       setConversations((prevConversations) => {
-        const updatedConversations = prevConversations.map((conv) => {
+        let found = false;
+        const updated = prevConversations.map((conv) => {
           if (conv.id === message.conversation_id) {
-            console.log("Updating conversation:", conv.id);
+            found = true;
             return {
               ...conv,
               last_message: message.content,
               last_message_time: "Just now",
+              last_message_at: new Date().toISOString(),
+              // Only mark as unread if the message is NOT from the current user
+              last_checked_at:
+                message.sender_id === user.id
+                  ? conv.last_checked_at
+                  : conv.last_checked_at,
             };
           }
           return conv;
         });
-        console.log("Updated conversations:", updatedConversations);
-        return updatedConversations;
+
+        return updated;
       });
 
-      // Update messages if we're in the relevant conversation
+      // Update messages if the current conversation is active
       if (selectedUser && message.conversation_id === selectedUser.id) {
-        console.log("Adding message to current conversation");
         setMessages((prev) => {
-          // Check if message already exists to prevent duplicates
-          const messageExists = prev.some((m) => m.id === message.id);
-          if (!messageExists) {
-            console.log("Message doesn't exist, adding to state");
-            return [...prev, message];
-          }
-          console.log("Message already exists, not adding");
+          const exists = prev.some((m) => m.id === message.id);
+          if (!exists) return [...prev, message];
           return prev;
         });
-      } else {
-        console.log(
-          "Message is for a different conversation:",
-          message.conversation_id
-        );
       }
     };
 
-    // Join all conversations
+    // Join all rooms
     conversations.forEach((conv) => {
-      console.log("Joining conversation room:", conv.id);
       socket.emit("join_conversation", conv.id);
     });
 
-    // Set up socket event listener
     socket.on("new_message", handleNewMessage);
 
-    // Debug: Log socket connection status
-    console.log("Socket connected:", socket.connected);
-    console.log("Current socket ID:", socket.id);
-    console.log("Current conversations:", conversations);
-
-    // Cleanup function
     return () => {
-      console.log("Cleaning up socket listeners");
       conversations.forEach((conv) => {
-        console.log("Leaving conversation room:", conv.id);
         socket.emit("leave_conversation", conv.id);
       });
       socket.off("new_message", handleNewMessage);
     };
-  }, [selectedUser, conversations]);
+  }, [conversations, selectedUser, user]);
 
   const fetchConversations = async () => {
     try {
@@ -168,27 +156,44 @@ function Chat() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (message.trim() && selectedUser) {
-      try {
-        console.log("Sending message to conversation:", selectedUser.id);
-        const response = await axios.post(
-          `/api/chat/conversations/${selectedUser.id}/messages`,
-          {
-            senderId: user.id,
-            content: message.trim(),
-          }
-        );
+    if (!message.trim() || !selectedUser) return;
 
-        if (response.data.ok) {
-          // Clear input first to prevent duplicate sends
-          setMessage("");
+    // Temporary optimistic message
+    const tempMessage = {
+      id: Date.now(), // temp ID
+      content: message,
+      sender_id: user.id,
+      conversation_id: selectedUser.id,
+      created_at: new Date().toISOString(),
+    };
 
-          // Don't update the UI here, let the socket event handle it
-          console.log("Message sent successfully, waiting for socket event");
+    setMessages((prev) => [...prev, tempMessage]);
+    setMessage("");
+
+    try {
+      // Send to backend
+      const response = await axios.post(
+        `/api/chat/conversations/${selectedUser.id}/messages`,
+        {
+          senderId: user.id,
+          content: tempMessage.content,
         }
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
+      );
+
+      const savedMessage = {
+        ...response.data.message,
+        conversation_id: selectedUser.id,
+      };
+
+      // Replace temp message with server message (real ID)
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempMessage.id ? savedMessage : m))
+      );
+
+      // Emit via socket (normalized field)
+      socket.emit("send_message", savedMessage);
+    } catch (err) {
+      console.error("Error sending message:", err);
     }
   };
 
@@ -205,13 +210,25 @@ function Chat() {
   });
 
   const handleUserSelect = async (conversation) => {
+    // Leave previous room
+    if (previousSelectedUserRef.current) {
+      socket.emit("leave_conversation", previousSelectedUserRef.current.id);
+    }
+
+    // Join new room
+    socket.emit("join_conversation", conversation.id);
+
     setSelectedUser(conversation);
+    previousSelectedUserRef.current = conversation;
+
     if (isMobile) setShowUsersList(false);
 
+    // Fetch messages for the selected conversation
+    fetchMessages(conversation.id);
+
+    // Mark conversation as read
     try {
       await axios.post(`/api/chat/conversations/${conversation.id}/read_convo`);
-      console.log("Marked conversation as read");
-      // Optimistically update local state
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === conversation.id
@@ -219,8 +236,8 @@ function Chat() {
             : conv
         )
       );
-    } catch (error) {
-      console.error("Failed to mark conversation as read", error);
+    } catch (err) {
+      console.error("Failed to mark conversation as read:", err);
     }
   };
 
